@@ -41,6 +41,7 @@
           out      (a/chan 10)
           err      (a/chan 10)
           listener (wsa/websocket-listener in out err)]
+      (is (satisfies? ws/Listener listener))
       (ws/on-open listener socket)
       (a/>!! out "foo")
       (let [ex (a/<!! err)]
@@ -52,3 +53,56 @@
         (is (some? ex))
         (is (instance? clojure.lang.ExceptionInfo ex))
         (is (= "on-error" (.getMessage ex)))))))
+
+(deftest go-websocket-test
+  (testing "message sending and receiving"
+    (let [client   (a/chan 10)
+          server   (a/chan 10)
+          socket   (reify
+                     ws/Socket
+                     (-close [_ code reason]
+                       (a/>!! client [:close code reason]))
+                     ws/AsyncSocket
+                     (-send-async [_ mesg succeed _]
+                       (a/>!! client [:send mesg])
+                       (succeed)))
+          response (wsa/go-websocket [in out err]
+                     (a/>! server [:receive (a/<! in)])
+                     (a/>! out "Second")
+                     (a/>! server [:receive (a/<! in)])
+                     (a/>! out "Fourth"))
+          listener (::ws/listener response)]
+      (is (map? response))
+      (is (satisfies? ws/Listener listener))
+      (ws/on-open listener socket)
+      (ws/on-message listener socket "First")
+      (ws/on-message listener socket "Third")
+      (is (= [:receive "First"] (a/<!! server)))
+      (is (= [:send "Second"] (a/<!! client)))
+      (is (= [:receive "Third"] (a/<!! server)))
+      (is (= [:send "Fourth"] (a/<!! client)))
+      (is (= [:close 1000 "Normal Closure"] (a/<!! client)))))
+  (testing "errors"
+    (let [server   (a/chan 10)
+          socket   (reify
+                     ws/Socket
+                     (-close [_ _ _])
+                     ws/AsyncSocket
+                     (-send-async [_ _ _ fail]
+                       (fail (ex-info "send" {}))))
+          response (wsa/go-websocket [in out err]
+                     (a/>! server (a/<! err))
+                     (a/>! out "expected failure")
+                     (a/>! server (a/<! err)))
+          listener (::ws/listener response)]
+      (is (satisfies? ws/Listener listener))
+      (ws/on-open listener socket)
+      (ws/on-error listener socket (ex-info "on-error" {}))
+      (let [ex (a/<!! server)]
+        (is (some? ex))
+        (is (instance? clojure.lang.ExceptionInfo ex))
+        (is (= "on-error" (.getMessage ex))))
+      (let [ex (a/<!! server)]
+        (is (some? ex))
+        (is (instance? clojure.lang.ExceptionInfo ex))
+        (is (= "send" (.getMessage ex)))))))
