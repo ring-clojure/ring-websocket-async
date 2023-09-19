@@ -66,7 +66,7 @@
                      (-send-async [_ mesg succeed _]
                        (a/>!! client [:send mesg])
                        (succeed)))
-          response (wsa/go-websocket [in out err]
+          response (wsa/go-websocket [in out _]
                      (a/>! server [:receive (a/<! in)])
                      (a/>! out "Second")
                      (a/>! server [:receive (a/<! in)])
@@ -90,7 +90,7 @@
                      ws/AsyncSocket
                      (-send-async [_ _ _ fail]
                        (fail (ex-info "send" {}))))
-          response (wsa/go-websocket [in out err]
+          response (wsa/go-websocket [_ out err]
                      (a/>! server (a/<! err))
                      (a/>! out "expected failure")
                      (a/>! server (a/<! err)))

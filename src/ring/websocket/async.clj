@@ -44,6 +44,7 @@
       (when-let [msg (<! in)]
         (>! out msg)
         (recur))))"
+  {:clj-kondo/lint-as 'clojure.core/fn}
   [[in out err] & body]
   {:pre [(symbol? in) (symbol? out) (symbol? err)]}
   `(let [~in  (a/chan)
