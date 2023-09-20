@@ -52,7 +52,20 @@
       (let [ex (a/<!! err)]
         (is (some? ex))
         (is (instance? clojure.lang.ExceptionInfo ex))
-        (is (= "on-error" (.getMessage ex)))))))
+        (is (= "on-error" (.getMessage ex))))))
+  (testing "closing"
+    (let [client   (a/chan 10)
+          socket   (reify
+                     ws/Socket
+                     (-close [_ code reason]
+                       (a/>!! client [:close code reason])))
+          in       (a/chan 10)
+          out      (a/chan 10)
+          err      (a/chan 10)
+          listener (wsa/websocket-listener in out err)]
+      (ws/on-open listener socket)
+      (a/>!! out (wsa/closed 1001 "Going Away"))
+      (is (= [:close 1001 "Going Away"] (a/<!! client))))))
 
 (deftest go-websocket-test
   (testing "message sending and receiving"
@@ -105,4 +118,15 @@
       (let [ex (a/<!! server)]
         (is (some? ex))
         (is (instance? clojure.lang.ExceptionInfo ex))
-        (is (= "send" (.getMessage ex)))))))
+        (is (= "send" (.getMessage ex))))))
+  (testing "closing"
+    (let [client   (a/chan 10)
+          socket   (reify
+                     ws/Socket
+                     (-close [_ code reason]
+                       (a/>!! client [:close code reason])))
+          response (wsa/go-websocket [_ out _]
+                     (a/>!! out (wsa/closed 1001 "Going Away")))
+          listener (::ws/listener response)]
+      (ws/on-open listener socket)
+      (is (= [:close 1001 "Going Away"] (a/<!! client))))))

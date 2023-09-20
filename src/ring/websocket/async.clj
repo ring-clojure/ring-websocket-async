@@ -2,6 +2,15 @@
   (:require [clojure.core.async :as a]
             [ring.websocket :as ws]))
 
+(defrecord Closed [code reason])
+
+(defn closed
+  "When a closed message is sent via the output channel, the websocket
+  will close with the supplied integer code and reason string."
+  [code reason]
+  {:pre [(integer? code) (string? reason)]}
+  (->Closed code reason))
+
 (defn websocket-listener
   "Takes three core.async channels for input, output, and error reporting
   respectively, and returns a Ring websocket listener.
@@ -19,7 +28,9 @@
               (out-loop []
                 (a/take! out (fn [mesg]
                                (if (some? mesg)
-                                 (ws/send sock mesg out-loop fail)
+                                 (if (instance? Closed mesg)
+                                   (ws/close sock (:code mesg) (:reason mesg))
+                                   (ws/send sock mesg out-loop fail))
                                  (ws/close sock)))))]
         (out-loop)))
     (on-message [_ _ mesg]
