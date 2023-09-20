@@ -44,12 +44,21 @@ Then executes its body in a core.async `go` block. When the block
 completes, the websocket is closed by the server. If the client closes
 the websocket, the associated channels are also closed.
 
-A Ring websocket response will be returned by the macro, so you can just
+To close the connection from the server with an error code, you can use
+the `closed` function to send a special message to the output channel:
+
+```clojure
+(defn closes-with-error [request]
+  (wsa/go-websocket [in out err]
+    (>! out (wsa/closed 1001 "Gone Away"))))
+```
+
+A Ring websocket response will be returned by the macro, so you can
 directly return it from the handler.
 
 If you want more control, you can use the lower-level
-`websocket-listener` function instead. The following example is
-equivalent to the previous one using the `go-websocket` macro:
+`websocket-listener` function. The following handler example is
+equivalent to the one using the `go-websocket` macro:
 
 ```clojure
 (defn echo-websocket-handler [request]
