@@ -129,4 +129,28 @@
                      (a/>!! out (wsa/closed 1001 "Going Away")))
           listener (::ws/listener response)]
       (ws/on-open listener socket)
-      (is (= [:close 1001 "Going Away"] (a/<!! client))))))
+      (is (= [:close 1001 "Going Away"] (a/<!! client)))))
+  (testing "omitting err argument"
+    (let [client   (a/chan 10)
+          server   (a/chan 10)
+          socket   (reify
+                     ws/Socket
+                     (-close [_ code reason]
+                       (a/>!! client [:close code reason]))
+                     ws/AsyncSocket
+                     (-send-async [_ mesg succeed _]
+                       (a/>!! client [:send mesg])
+                       (succeed)))
+          response (wsa/go-websocket [in out]
+                     (a/>! server [:receive (a/<! in)])
+                     (a/>! out "Second")
+                     (a/>! server [:receive (a/<! in)]))
+          listener (::ws/listener response)]
+      (ws/on-open listener socket)
+      (ws/on-message listener socket "First")
+      (is (= [:receive "First"] (a/<!! server)))
+      (is (= [:send "Second"] (a/<!! client)))
+      (ws/on-error listener socket (ex-info "Error" {}))
+      (is (= [:close 1011 "Unexpected Error"] (a/<!! client)))
+      (ws/on-close listener socket 1011 "Unexpected Error")
+      (is (= [:receive nil] (a/<!! server))))))

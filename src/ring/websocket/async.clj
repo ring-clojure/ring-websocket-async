@@ -49,17 +49,30 @@
   channels (see: websocket-listener). The body of the macro is executed in a
   core.async go block. At the end of the body, the socket is closed.
 
+  The err symbol may optionally be omitted. In that case, any websocket
+  error will result in the socket being closed with a 1011 unexpected
+  server error response.
+
   Example:
   (go-websocket [in out err]
     (loop []
       (when-let [msg (<! in)]
         (>! out msg)
         (recur))))"
-  {:clj-kondo/lint-as 'clojure.core/fn}
+  {:clj-kondo/lint-as 'clojure.core/fn
+   :arglists '([[in out] & body] [[in out err] & body])}
   [[in out err] & body]
-  {:pre [(symbol? in) (symbol? out) (symbol? err)]}
-  `(let [~in  (a/chan)
-         ~out (a/chan)
-         ~err (a/chan)]
-     (a/go (try ~@body (finally (a/close! ~out))))
-     {::ws/listener (websocket-listener ~in ~out ~err)}))
+  {:pre [(symbol? in) (symbol? out) (or (nil? err) (symbol? err))]}
+  (if (some? err)
+    `(let [~in  (a/chan)
+           ~out (a/chan)
+           ~err (a/chan)]
+       (a/go (try ~@body (finally (a/close! ~out))))
+       {::ws/listener (websocket-listener ~in ~out ~err)})
+    `(let [~in  (a/chan)
+           ~out (a/chan)
+           err# (a/chan)]
+       (a/go (when-let [ex# (a/<! err#)]
+               (a/>! ~out (closed 1011 "Unexpected Error"))))
+       (a/go (try ~@body (finally (a/close! ~out))))
+       {::ws/listener (websocket-listener ~in ~out err#)})))

@@ -47,9 +47,13 @@ the websocket, the associated channels are also closed.
 A Ring websocket response will be returned by the macro, so you can
 directly return it from the handler.
 
-To close the connection from the server with a specific error code, you
-can use the `closed` function to send a special message to the output
-channel:
+The error channel may be omitted. In this case, any errors with the
+websocket protocol will close the connection with a 1011 unexpected
+server error message.
+
+To close the connection from the server with a specific error code of
+your choice, you can use the `closed` function to send a special message
+to the output channel:
 
 ```clojure
 (defn closes-with-error [request]
