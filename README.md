@@ -6,7 +6,7 @@ A Clojure library for using [core.async][] with [Ring's][] websocket API
 [core.async]: https://github.com/clojure/core.async
 [ring's]: https://github.com/ring-clojure/ring
 
-## Installlation
+## Installation
 
 Add the following dependency to your deps.edn file:
 
@@ -44,17 +44,18 @@ Then executes its body in a core.async `go` block. When the block
 completes, the websocket is closed by the server. If the client closes
 the websocket, the associated channels are also closed.
 
-To close the connection from the server with an error code, you can use
-the `closed` function to send a special message to the output channel:
+A Ring websocket response will be returned by the macro, so you can
+directly return it from the handler.
+
+To close the connection from the server with a specific error code, you
+can use the `closed` function to send a special message to the output
+channel:
 
 ```clojure
 (defn closes-with-error [request]
   (wsa/go-websocket [in out err]
     (>! out (wsa/closed 1001 "Gone Away"))))
 ```
-
-A Ring websocket response will be returned by the macro, so you can
-directly return it from the handler.
 
 If you want more control, you can use the lower-level
 `websocket-listener` function. The following handler example is
