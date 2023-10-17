@@ -1,6 +1,7 @@
 (ns ring.websocket.async
   (:require [clojure.core.async :as a]
-            [ring.websocket :as ws]))
+            [ring.websocket :as ws]
+            [ring.websocket.protocols :as wsp]))
 
 (defrecord Closed [code reason])
 
@@ -21,7 +22,7 @@
 
   Closing the out channel will close the socket and the two other channels."
   [in out err]
-  (reify ws/Listener
+  (reify wsp/Listener
     (on-open [_ sock]
       (letfn [(fail [ex]
                 (a/put! err ex))

@@ -2,16 +2,17 @@
   (:require [clojure.test :refer [deftest is testing]]
             [clojure.core.async :as a]
             [ring.websocket :as ws]
-            [ring.websocket.async :as wsa]))
+            [ring.websocket.async :as wsa]
+            [ring.websocket.protocols :as wsp]))
 
 (deftest test-websocket-listener
   (testing "message sending and receiving"
     (let [client   (a/chan 10)
           socket   (reify
-                     ws/Socket
+                     wsp/Socket
                      (-close [_ code reason]
                        (a/>!! client [:close code reason]))
-                     ws/AsyncSocket
+                     wsp/AsyncSocket
                      (-send-async [_ mesg succeed _]
                        (a/>!! client [:send mesg])
                        (succeed)))
@@ -19,36 +20,36 @@
           out      (a/chan 10)
           err      (a/chan 10)
           listener (wsa/websocket-listener in out err)]
-      (ws/on-open listener socket)
-      (ws/on-message listener socket "First")
+      (wsp/on-open listener socket)
+      (wsp/on-message listener socket "First")
       (is (= "First" (a/<!! in)))
       (a/>!! out "Second")
       (is (= [:send "Second"] (a/<!! client)))
-      (ws/on-message listener socket "Third")
+      (wsp/on-message listener socket "Third")
       (is (= "Third" (a/<!! in)))
       (a/>!! out "Fourth")
       (is (= [:send "Fourth"] (a/<!! client)))
-      (ws/on-close listener socket 1000 "Normal Closure")
+      (wsp/on-close listener socket 1000 "Normal Closure")
       (is (= [:close 1000 "Normal Closure"] (a/<!! client)))))
   (testing "errors"
     (let [socket   (reify
-                     ws/Socket
+                     wsp/Socket
                      (-close [_ _ _])
-                     ws/AsyncSocket
+                     wsp/AsyncSocket
                      (-send-async [_ _ _ fail]
                        (fail (ex-info "send" {}))))
           in       (a/chan 10)
           out      (a/chan 10)
           err      (a/chan 10)
           listener (wsa/websocket-listener in out err)]
-      (is (satisfies? ws/Listener listener))
-      (ws/on-open listener socket)
+      (is (satisfies? wsp/Listener listener))
+      (wsp/on-open listener socket)
       (a/>!! out "foo")
       (let [ex (a/<!! err)]
         (is (some? ex))
         (is (instance? clojure.lang.ExceptionInfo ex))
         (is (= "send" (.getMessage ex))))
-      (ws/on-error listener socket (ex-info "on-error" {}))
+      (wsp/on-error listener socket (ex-info "on-error" {}))
       (let [ex (a/<!! err)]
         (is (some? ex))
         (is (instance? clojure.lang.ExceptionInfo ex))
@@ -56,14 +57,14 @@
   (testing "closing"
     (let [client   (a/chan 10)
           socket   (reify
-                     ws/Socket
+                     wsp/Socket
                      (-close [_ code reason]
                        (a/>!! client [:close code reason])))
           in       (a/chan 10)
           out      (a/chan 10)
           err      (a/chan 10)
           listener (wsa/websocket-listener in out err)]
-      (ws/on-open listener socket)
+      (wsp/on-open listener socket)
       (a/>!! out (wsa/closed 1001 "Going Away"))
       (is (= [:close 1001 "Going Away"] (a/<!! client))))))
 
@@ -72,10 +73,10 @@
     (let [client   (a/chan 10)
           server   (a/chan 10)
           socket   (reify
-                     ws/Socket
+                     wsp/Socket
                      (-close [_ code reason]
                        (a/>!! client [:close code reason]))
-                     ws/AsyncSocket
+                     wsp/AsyncSocket
                      (-send-async [_ mesg succeed _]
                        (a/>!! client [:send mesg])
                        (succeed)))
@@ -86,10 +87,10 @@
                      (a/>! out "Fourth"))
           listener (::ws/listener response)]
       (is (map? response))
-      (is (satisfies? ws/Listener listener))
-      (ws/on-open listener socket)
-      (ws/on-message listener socket "First")
-      (ws/on-message listener socket "Third")
+      (is (satisfies? wsp/Listener listener))
+      (wsp/on-open listener socket)
+      (wsp/on-message listener socket "First")
+      (wsp/on-message listener socket "Third")
       (is (= [:receive "First"] (a/<!! server)))
       (is (= [:send "Second"] (a/<!! client)))
       (is (= [:receive "Third"] (a/<!! server)))
@@ -98,9 +99,9 @@
   (testing "errors"
     (let [server   (a/chan 10)
           socket   (reify
-                     ws/Socket
+                     wsp/Socket
                      (-close [_ _ _])
-                     ws/AsyncSocket
+                     wsp/AsyncSocket
                      (-send-async [_ _ _ fail]
                        (fail (ex-info "send" {}))))
           response (wsa/go-websocket [_ out err]
@@ -108,9 +109,9 @@
                      (a/>! out "expected failure")
                      (a/>! server (a/<! err)))
           listener (::ws/listener response)]
-      (is (satisfies? ws/Listener listener))
-      (ws/on-open listener socket)
-      (ws/on-error listener socket (ex-info "on-error" {}))
+      (is (satisfies? wsp/Listener listener))
+      (wsp/on-open listener socket)
+      (wsp/on-error listener socket (ex-info "on-error" {}))
       (let [ex (a/<!! server)]
         (is (some? ex))
         (is (instance? clojure.lang.ExceptionInfo ex))
@@ -122,22 +123,22 @@
   (testing "closing"
     (let [client   (a/chan 10)
           socket   (reify
-                     ws/Socket
+                     wsp/Socket
                      (-close [_ code reason]
                        (a/>!! client [:close code reason])))
           response (wsa/go-websocket [_ out _]
                      (a/>!! out (wsa/closed 1001 "Going Away")))
           listener (::ws/listener response)]
-      (ws/on-open listener socket)
+      (wsp/on-open listener socket)
       (is (= [:close 1001 "Going Away"] (a/<!! client)))))
   (testing "omitting err argument"
     (let [client   (a/chan 10)
           server   (a/chan 10)
           socket   (reify
-                     ws/Socket
+                     wsp/Socket
                      (-close [_ code reason]
                        (a/>!! client [:close code reason]))
-                     ws/AsyncSocket
+                     wsp/AsyncSocket
                      (-send-async [_ mesg succeed _]
                        (a/>!! client [:send mesg])
                        (succeed)))
@@ -146,11 +147,11 @@
                      (a/>! out "Second")
                      (a/>! server [:receive (a/<! in)]))
           listener (::ws/listener response)]
-      (ws/on-open listener socket)
-      (ws/on-message listener socket "First")
+      (wsp/on-open listener socket)
+      (wsp/on-message listener socket "First")
       (is (= [:receive "First"] (a/<!! server)))
       (is (= [:send "Second"] (a/<!! client)))
-      (ws/on-error listener socket (ex-info "Error" {}))
+      (wsp/on-error listener socket (ex-info "Error" {}))
       (is (= [:close 1011 "Unexpected Error"] (a/<!! client)))
-      (ws/on-close listener socket 1011 "Unexpected Error")
+      (wsp/on-close listener socket 1011 "Unexpected Error")
       (is (= [:receive nil] (a/<!! server))))))
