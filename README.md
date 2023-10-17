@@ -1,7 +1,7 @@
 # Ring Websocket Async [![Build Status](https://github.com/ring-clojure/ring-websocket-async/actions/workflows/test.yml/badge.svg?branch=master)](https://github.com/ring-clojure/ring-websocket-async/actions/workflows/test.yml)
 
 A Clojure library for using [core.async][] with [Ring's][] websocket API
-(currently in alpha testing).
+(currently in beta testing).
 
 [core.async]: https://github.com/clojure/core.async
 [ring's]: https://github.com/ring-clojure/ring
@@ -10,11 +10,11 @@ A Clojure library for using [core.async][] with [Ring's][] websocket API
 
 Add the following dependency to your deps.edn file:
 
-    org.ring-clojure/ring-websocket-async {:mvn {"0.1.0-alpha1"}}
+    org.ring-clojure/ring-websocket-async {:mvn {"0.1.0-beta1"}}
 
 Or to your Leiningen project file:
 
-    [org.ring-clojure/ring-websocket-async "0.1.0-alpha1"]
+    [org.ring-clojure/ring-websocket-async "0.1.0-beta1"]
 
 ## Usage
 
