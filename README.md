@@ -1,4 +1,4 @@
-# Ring Websocket Async [![Build Status](https://github.com/ring-clojure/ring-websocket-async/actions/workflows/test.yml/badge.svg?branch=master)](https://github.com/ring-clojure/ring-websocket-async/actions/workflows/test.yml)
+# Ring-Websocket-Async [![Build Status](https://github.com/ring-clojure/ring-websocket-async/actions/workflows/test.yml/badge.svg?branch=master)](https://github.com/ring-clojure/ring-websocket-async/actions/workflows/test.yml)
 
 A Clojure library for using [core.async][] with [Ring's][] websocket API
 (currently in beta testing).
