@@ -82,6 +82,6 @@ equivalent to the one using the `go-websocket` macro:
 
 ## License
 
-Copyright © 2023 James Reeves
+Copyright © 2024 James Reeves
 
 Released under the MIT license.
