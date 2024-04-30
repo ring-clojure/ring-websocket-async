@@ -3,6 +3,6 @@
   :url "https://github.com/ring-clojure/ring-websocket-async"
   :license {:name "The MIT License"
             :url "http://opensource.org/licenses/MIT"}
-  :dependencies [[org.clojure/clojure "1.7.0"]
+  :dependencies [[org.clojure/clojure "1.9.0"]
                  [org.clojure/core.async "1.6.681"]
-                 [ring/ring-core "1.11.0-beta2"]])
+                 [ring/ring-core "1.12.1"]])
