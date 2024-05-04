@@ -40,9 +40,9 @@ The macro sets three binding variables:
 * `out` - the output channel
 * `err` - the error channel
 
-Then executes its body in a core.async `go` block. When the block
-completes, the websocket is closed by the server. If the client closes
-the websocket, the associated channels are also closed.
+Then executes its body in a core.async `go` block. If the WebSocket is
+closed by either the client or the server, the associated channels will
+also be closed.
 
 A Ring websocket response will be returned by the macro, so you can
 directly return it from the handler.

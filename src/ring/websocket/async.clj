@@ -48,7 +48,7 @@
   "Macro for returning a websocket response handled by an inner go block.
   Expects three binding symbols - in, out and err - and assigns them to
   channels (see: websocket-listener). The body of the macro is executed in a
-  core.async go block. At the end of the body, the socket is closed.
+  core.async go block.
 
   The err symbol may optionally be omitted. In that case, any websocket
   error will result in the socket being closed with a 1011 unexpected
@@ -68,12 +68,12 @@
     `(let [~in  (a/chan)
            ~out (a/chan)
            ~err (a/chan)]
-       (a/go (try ~@body (finally (a/close! ~out))))
+       (a/go ~@body)
        {::ws/listener (websocket-listener ~in ~out ~err)})
     `(let [~in  (a/chan)
            ~out (a/chan)
            err# (a/chan)]
        (a/go (when-let [ex# (a/<! err#)]
                (a/>! ~out (closed 1011 "Unexpected Error"))))
-       (a/go (try ~@body (finally (a/close! ~out))))
+       (a/go ~@body)
        {::ws/listener (websocket-listener ~in ~out err#)})))

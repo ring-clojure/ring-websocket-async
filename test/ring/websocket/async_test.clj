@@ -84,7 +84,8 @@
                      (a/>! server [:receive (a/<! in)])
                      (a/>! out "Second")
                      (a/>! server [:receive (a/<! in)])
-                     (a/>! out "Fourth"))
+                     (a/>! out "Fourth")
+                     (a/close! out))
           listener (::ws/listener response)]
       (is (map? response))
       (is (satisfies? wsp/Listener listener))
@@ -107,7 +108,8 @@
           response (wsa/go-websocket [_ out err]
                      (a/>! server (a/<! err))
                      (a/>! out "expected failure")
-                     (a/>! server (a/<! err)))
+                     (a/>! server (a/<! err))
+                     (a/close! out))
           listener (::ws/listener response)]
       (is (satisfies? wsp/Listener listener))
       (wsp/on-open listener socket)
@@ -145,7 +147,8 @@
           response (wsa/go-websocket [in out]
                      (a/>! server [:receive (a/<! in)])
                      (a/>! out "Second")
-                     (a/>! server [:receive (a/<! in)]))
+                     (a/>! server [:receive (a/<! in)])
+                     (a/close! out))
           listener (::ws/listener response)]
       (wsp/on-open listener socket)
       (wsp/on-message listener socket "First")
