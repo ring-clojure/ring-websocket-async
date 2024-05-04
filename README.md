@@ -10,11 +10,11 @@ A Clojure library for using [core.async][] with [Ring's][] websocket API
 
 Add the following dependency to your deps.edn file:
 
-    org.ring-clojure/ring-websocket-async {:mvn/version "0.1.0"}
+    org.ring-clojure/ring-websocket-async {:mvn/version "0.2.0"}
 
 Or to your Leiningen project file:
 
-    [org.ring-clojure/ring-websocket-async "0.1.0"]
+    [org.ring-clojure/ring-websocket-async "0.2.0"]
 
 ## Usage
 
