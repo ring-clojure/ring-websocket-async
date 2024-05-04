@@ -16,6 +16,13 @@ Or to your Leiningen project file:
 
     [org.ring-clojure/ring-websocket-async "0.2.0"]
 
+## Breaking Changes
+
+In 0.1.0 the `go-websocket` block would automatically close the
+WebSocket after it completes. In 0.2.0 this was removed, as it prevented
+easy use of functions like `clojure.core.async/pipe`, which have their
+own internal `go` blocks.
+
 ## Usage
 
 The most convenient way to get started is to use the `go-websocket`
